@@ -1,0 +1,353 @@
+/* Base styling and imports */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300&family=Raleway:wght@100&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@500&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* Mini Header */
+.miniheader {
+    width: 100%;
+    background-color: darkslategrey;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 45px;
+}
+
+.miniheader .contactinfo span {
+    color: #fff;
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.socials a {
+    color: #fff;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+
+.socials a:hover {
+    color: lightgreen;
+}
+
+/* Navbar */
+nav {
+    width: 100%;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+nav .logo img {
+    width: 120px;
+    height: auto;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    margin-left: 30px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: black;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+nav ul li a.active,
+nav ul li a:hover {
+    color: rgb(14, 178, 14);
+}
+
+/* Mobile Navbar */
+.menu-toggle {
+    display: none;
+    font-size: 26px;
+    cursor: pointer;
+    color: black;
+}
+
+@media (max-width: 768px) {
+    nav {
+        flex-wrap: wrap;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    nav ul {
+        flex-direction: column;
+        width: 100%;
+        display: none; /* hidden by default */
+        background: #fff;
+        border-top: 1px solid #ddd;
+        padding: 15px 0;
+    }
+
+    nav ul.show {
+        display: flex; /* shown when toggled */
+    }
+
+    nav ul li {
+        margin: 10px 0;
+        text-align: center;
+    }
+}
+
+/* Header Section */
+.header-section {
+    position: relative;
+    width: 100%;
+    height: 700px;
+    overflow: hidden;
+}
+
+.header-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+}
+
+.header-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+}
+
+.header-content h1 {
+    font-size: 48px;
+    margin: 0 0 15px;
+}
+
+.header-content p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.header-buttons a {
+    display: inline-block;
+    padding: 15px 30px;
+    margin: 5px;
+    border: 1px solid rgb(14, 178, 14);
+    color: #fff;
+    background-color: rgb(14, 178, 14);
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: 0.4s;
+}
+
+.header-buttons a:hover {
+    background-color: #fff;
+    color: rgb(14, 178, 14);
+}
+
+/* About Us */
+.about-us {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+    gap: 40px;
+}
+
+.about-text {
+    max-width: 500px;
+}
+
+.about-text h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+.about-text p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.about-text .button3 {
+    background-color: rgb(14, 178, 14);
+    color: #fff;
+    padding: 12px 25px;
+    text-decoration: none;
+    text-transform: uppercase;
+    display: inline-block;
+    transition: 0.4s;
+}
+
+.about-text .button3:hover {
+    background-color: #fff;
+    color: rgb(14, 178, 14);
+}
+
+.about-image img {
+    max-width: 500px;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+/* What We Do */
+.what-we-do {
+    background-color: rgba(127, 255, 212, 0.1);
+    padding: 80px 20px;
+}
+
+.what-we-do .section-title {
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 50px;
+}
+
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+}
+
+.image-card {
+    width: 260px;
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.image-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+}
+
+.image-card .image-text {
+    padding: 15px;
+}
+
+.image-card .image-text h3 {
+    color: rgb(14, 178, 14);
+    margin-bottom: 10px;
+}
+
+/* Gallery */
+.gallery {
+    padding: 80px 20px;
+}
+
+.gallery .section-title {
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 50px;
+}
+
+.gallery-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.gallery-container img {
+    width: 260px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: transform 0.5s ease;
+}
+
+.gallery-container img:hover {
+    transform: scale(1.1);
+}
+
+/* Footer */
+.footer-distributed {
+    background-color: #111;
+    color: #fff;
+    padding: 50px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.footer-distributed h3 span {
+    color: lightseagreen;
+}
+
+.footer-center i, .footer-icons a {
+    margin-right: 10px;
+    color: #fff;
+}
+
+.footer-center p a {
+    color: lightseagreen;
+}
+
+.footer-right p {
+    margin-bottom: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .about-us, .cards-container, .gallery-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .header-content h1 {
+        font-size: 36px;
+    }
+
+    .header-content p {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-content h1 {
+        font-size: 28px;
+    }
+
+    .header-content p {
+        font-size: 14px;
+    }
+
+    .about-text, .about-image img {
+        width: 100%;
+    }
+
+    .image-card, .gallery-container img {
+        width: 90%;
+    }
+}
