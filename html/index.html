@@ -8,16 +8,22 @@
 
     <!-- Link to CSS for styling -->
     <link rel="stylesheet" href="../css/style.css">
+    <!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <!-- Favicon for the website -->
     <link rel="icon" href="../assets/images/favicon.png">
 
     <!-- FontAwesome for icons -->
     <script src="https://kit.fontawesome.com/339c5c248e.js" crossorigin="anonymous"></script>
+    
 </head>
 
 <body>
-
+    
     <!-- Mini Header (Contact Information & Social Links) -->
     <div class="miniheader">
         <div class="contactinfo">
@@ -49,6 +55,7 @@
         <li><a href="#services">Services</a></li>
         <li><a href="#gallery">Gallery</a></li>
         <li><a href="#contact">Contact</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
         <li><a href="login.html">Signup/Login</a></li>
         <li><a href="/register">Register</a></li>
 
@@ -58,12 +65,12 @@
 
 
     <!-- Header Section -->
-    <header class="header-section" id="home">
+    <header class="header-section" id="home" data-aos="fade-right">
         <img src="../assets/images/bg1.jpg" alt="Header Background">
         <div class="header-content">
             <h1>Experience The Best Events</h1>
             <p>Your one-stop destination for all entertainment, arts, and community gatherings</p>
-            <div class="header-buttons">
+            <div class="header-buttons" data-aos="fade-up">
                 <a href="#" class="button1" onclick="openEventsModal()">Explore Events</a>
                 <a href="#contact" class="button2">Contact Us</a>
             </div>
@@ -81,7 +88,7 @@
                         <div class="carousel-content">
                             <h3>Summer Music Festival</h3>
                             <p>Join us for an unforgettable night of music under the stars</p>
-                            <span class="carousel-date">July 15, 2025</span>
+                            <span class="carousel-date">July 15, 2026</span>
                         </div>
                     </div>
                     <div class="carousel-slide">
@@ -89,7 +96,7 @@
                         <div class="carousel-content">
                             <h3>Tech Innovation Conference</h3>
                             <p>Discover the latest in technology and innovation</p>
-                            <span class="carousel-date">August 20, 2025</span>
+                            <span class="carousel-date">December 20, 2025</span>
                         </div>
                     </div>
                     <div class="carousel-slide">
@@ -97,7 +104,7 @@
                         <div class="carousel-content">
                             <h3>Cultural Arts Exhibition</h3>
                             <p>Explore diverse cultural expressions through art and music</p>
-                            <span class="carousel-date">September 10, 2025</span>
+                            <span class="carousel-date">September 10, 2026</span>
                         </div>
                     </div>
                     <div class="carousel-slide">
@@ -105,7 +112,7 @@
                         <div class="carousel-content">
                             <h3>Family Fun Fair</h3>
                             <p>A delightful family event with games and entertainment</p>
-                            <span class="carousel-date">October 5, 2025</span>
+                            <span class="carousel-date">November 21, 2025</span>
                         </div>
                     </div>
                     <div class="carousel-slide">
@@ -113,7 +120,7 @@
                         <div class="carousel-content">
                             <h3>Corporate Leadership Summit</h3>
                             <p>Professional development and business strategy insights</p>
-                            <span class="carousel-date">November 12, 2025</span>
+                            <span class="carousel-date">November 15, 2025</span>
                         </div>
                     </div>
                 </div>
@@ -135,14 +142,14 @@
     </section>
 
     <!-- About Us Section -->
-    <section class="about-us" id="about-us">
-        <div class="about-text">
+    <section class="about-us" id="about-us" data-aos="fade-up">
+        <div class="about-text" data-aos="fade-right">
             <h2>About Us</h2>
             <p>We believe an event is more than just a gathering—it’s a memory in the making. Our mission is to design and execute experiences that reflect your vision, engage your audience, and leave a lasting impression.</p>
             <p>At EventSphere, every event is a story waiting to be told. We work with you to bring your vision to life, creating seamless experiences filled with joy and heart.</p>
             <a href="#" class="button3">Read More</a>
         </div>
-        <div class="about-image">
+        <div class="about-image" data-aos="fade-left">
             <img src="../assets/images/pic1.jpg" alt="About EventSphere">
         </div>
     </section>
@@ -238,17 +245,153 @@
                         <label for="message">Additional Message</label>
                         <textarea id="message" name="message" rows="4" placeholder="Any special requirements or questions..."></textarea>
                     </div>
-                    <div class="form-actions">
-                        <button type="button" onclick="closeRegistrationModal()" class="btn-cancel">Cancel</button>
-                        <button type="submit" class="btn-submit">Register for Event</button>
-                    </div>
+                   <div class="form-actions">
+                      <button type="button" onclick="closeRegistrationModal()" class="btn-cancel">Cancel</button>
+                       <button type="button" id="proceedToPaymentBtn" class="btn-submit" onclick="handleProceedToPayment()">Proceed to Payment</button>
+                   </div>
+
                 </form>
             </div>
         </div>
     </div>
+    <!-- ================= Payment Modal ================= -->
+<div id="paymentModal" class="modal">
+  <div class="modal-content payment-content">
+    <div class="modal-header">
+      <h2>Complete Your Payment</h2>
+      <span class="close" onclick="closePaymentModal()">&times;</span>
+    </div>
+
+    <div class="modal-body">
+      <div id="paymentEventInfo" class="payment-event-info"></div>
+
+      <h3>Select Payment Method</h3>
+      <div class="payment-methods">
+        <button type="button" class="pay-method" data-method="upi">UPI</button>
+        <button type="button" class="pay-method" data-method="card">Card</button>
+        <button type="button" class="pay-method" data-method="cash">Cash</button>
+      </div>
+
+
+      <!-- UPI -->
+      <div id="upiContainer" class="payment-container">
+        <p>Scan this QR to pay:</p>
+        <img id="qrImage" src="" alt="UPI QR" style="width:200px;height:200px;">
+        <p id="upiAmountText"></p>
+        <button id="payDemoBtn" class="pay-action">I’ve Paid</button>
+      </div>
+
+      <!-- Card -->
+      <div id="cardContainer" class="payment-container">
+        <input type="text" placeholder="Card Number" maxlength="16">
+        <input type="text" placeholder="Expiry (MM/YY)">
+        <input type="text" placeholder="CVV" maxlength="3">
+        <button id="payCardBtn" class="pay-action">Pay Now</button>
+      </div>
+
+      <!-- Cash -->
+      <div id="cashContainer" class="payment-container">
+        <p>Please pay ₹<span id="cashAmountText">0</span> at the event venue.</p>
+        <button id="confirmCashBtn" class="pay-action">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Success Popup -->
+<div id="paymentSuccessPopup" class="success-popup">
+  <div class="success-box">
+    <h3 id="successTitle">Payment Successful</h3>
+    <p id="successMessage"></p>
+    <button id="closeSuccessBtn">OK</button>
+  </div>
+</div>
+<!-- ================================================== -->
+
+    <section id="reviews" class="reviews-section">
+  <h2>What Our Customers Say</h2>
+
+  <div class="overall-rating">
+    <div>
+      <h3>Overall Rating</h3>
+      <div class="stars">★★★★★</div>
+      <p>4.6 out of 5 (based on 12,425 reviews)</p>
+    </div>
+    <button class="write-review-btn" id="openFeedbackBtn">Write a Review</button>
+  </div>
+
+  <div class="review-cards">
+    <div class="review-card">
+      <div class="review-header">
+        <img src="https://via.placeholder.com/50" alt="User">
+        <div>
+          <h4>Sachin Burdak</h4>
+          <p>3 days ago</p>
+        </div>
+      </div>
+      <div class="stars">★★★★★</div>
+      <div class="review-text">
+        I am so happy to find EventSphere! Affordable, efficient, and great customer support.
+      </div>
+      <span class="review-platform">Posted on Facebook</span>
+    </div>
+
+    <div class="review-card">
+      <div class="review-header">
+        <img src="https://via.placeholder.com/50" alt="User">
+        <div>
+          <h4>Hadi Rezai</h4>
+          <p>5 days ago</p>
+        </div>
+      </div>
+      <div class="stars">★★★★★</div>
+      <div class="review-text">
+        Amazing platform for event booking! Everything went smoothly.
+      </div>
+      <span class="review-platform">Posted on Google</span>
+    </div>
+
+    <div class="review-card">
+      <div class="review-header">
+        <img src="https://via.placeholder.com/50" alt="User">
+        <div>
+          <h4>Sergio Florez</h4>
+          <p>6 days ago</p>
+        </div>
+      </div>
+      <div class="stars">★★★★☆</div>
+      <div class="review-text">
+        Great experience overall. Highly recommended!
+      </div>
+      <span class="review-platform">Posted on Amazon</span>
+    </div>
+  </div>
+</section>
+<!-- Feedback Modal -->
+<div id="feedbackModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Write Your Review</h2>
+      <span id="closeModal" class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="stars">
+        <i data-rating="1" class="fa-solid fa-star"></i>
+        <i data-rating="2" class="fa-solid fa-star"></i>
+        <i data-rating="3" class="fa-solid fa-star"></i>
+        <i data-rating="4" class="fa-solid fa-star"></i>
+        <i data-rating="5" class="fa-solid fa-star"></i>
+      </div>
+      <textarea id="feedbackMessage" rows="4" placeholder="Share your experience..."></textarea>
+      <button id="submitFeedback" class="btn-submit">Submit Feedback</button>
+    </div>
+  </div>
+</div>
+
+
 
     <!-- Footer -->
-    <footer id="contact" class="footer-distributed">
+    <footer id="contact" class="footer-distributed" data-aos="fade-up">
         <div class="footer-left">
             <h3>Event<span>Sphere</span></h3>
             <p class="footer-company-name">© 2025 EventSphere. All rights reserved.</p>
@@ -282,7 +425,26 @@
     </footer>
 
     <!-- External JS file -->
-    <script src="../html/main.js"></script>
+    <script src="/html/main.js"></script>
+
+
+    <!-- AOS Animation JS -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init({
+    duration: 1000, // Animation speed
+    once: true // Animate only once per element
+  });
+</script>
+<!-- Example JS -->
+<script>
+const menuToggle = document.querySelector('.menu-toggle');
+const navLinks = document.querySelector('nav ul');
+
+menuToggle.addEventListener('click', () => {
+  navLinks.classList.toggle('show');
+});
+</script>
 
 </body>
 

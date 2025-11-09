@@ -32,7 +32,7 @@ const REGISTRATIONS_FILE = './data/registrations.json';
 const dbConfig = {
   host: 'localhost',
   user: 'root',
-  password: 'Akshat@5346', // Add your MySQL password here
+  password: '8969', // Add your MySQL password here
   database: 'eventsphere_db'
 };
 
@@ -97,6 +97,18 @@ async function initializeStorage() {
         FOREIGN KEY (eventId) REFERENCES events(id) ON DELETE CASCADE
       )
     `;
+    // Create Feedback Table
+const createFeedbacksTableQuery = `
+  CREATE TABLE IF NOT EXISTS feedbacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(255),
+    rating INT,
+    message TEXT,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`;
+await connection.execute(createFeedbacksTableQuery);
 
     await connection.execute(createUsersTableQuery);
     await connection.execute(createEventsTableQuery);
@@ -376,6 +388,10 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'html', 'register.html'));
 });
 
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'html', 'dashboard.html'));
+});
+
 app.post('/register', upload.single('file'), async (req, res) => {
   try {
     const {
@@ -487,6 +503,122 @@ app.post('/api/events/register', async (req, res) => {
       success: false,
       error: 'Registration failed. Please try again.'
     });
+  }
+});
+
+// Dashboard API endpoints
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    if (useFileStorage) {
+      const eventsData = await fs.readFile(EVENTS_FILE, 'utf8');
+      const registrationsData = await fs.readFile(REGISTRATIONS_FILE, 'utf8');
+      const events = JSON.parse(eventsData);
+      const registrations = JSON.parse(registrationsData);
+
+      res.json({
+        totalUsers: 0,
+        totalEvents: events.length,
+        totalRegistrations: registrations.length,
+        totalFeedbacks: 0
+      });
+    } else {
+      const connection = await pool.getConnection();
+      const [users] = await connection.execute('SELECT COUNT(*) as count FROM users');
+      const [events] = await connection.execute('SELECT COUNT(*) as count FROM events');
+      const [registrations] = await connection.execute('SELECT COUNT(*) as count FROM event_registrations');
+      const [feedbacks] = await connection.execute('SELECT COUNT(*) as count FROM feedbacks');
+      connection.release();
+
+      res.json({
+        totalUsers: users[0].count,
+        totalEvents: events[0].count,
+        totalRegistrations: registrations[0].count,
+        totalFeedbacks: feedbacks[0].count
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+  }
+});
+
+app.get('/api/dashboard/recent-registrations', async (req, res) => {
+  try {
+    if (useFileStorage) {
+      const data = await fs.readFile(REGISTRATIONS_FILE, 'utf8');
+      const registrations = JSON.parse(data);
+      const recent = registrations.slice(-10).reverse();
+      res.json(recent);
+    } else {
+      const connection = await pool.getConnection();
+      const [rows] = await connection.execute(`
+        SELECT er.*, e.title as eventTitle
+        FROM event_registrations er
+        LEFT JOIN events e ON er.eventId = e.id
+        ORDER BY er.registrationDate DESC
+        LIMIT 10
+      `);
+      connection.release();
+      res.json(rows);
+    }
+  } catch (error) {
+    console.error('Error fetching recent registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch recent registrations' });
+  }
+});
+
+app.get('/api/dashboard/all-registrations', async (req, res) => {
+  try {
+    if (useFileStorage) {
+      const data = await fs.readFile(REGISTRATIONS_FILE, 'utf8');
+      const registrations = JSON.parse(data);
+      res.json(registrations.reverse());
+    } else {
+      const connection = await pool.getConnection();
+      const [rows] = await connection.execute(`
+        SELECT er.*, e.title as eventTitle, e.date as eventDate
+        FROM event_registrations er
+        LEFT JOIN events e ON er.eventId = e.id
+        ORDER BY er.registrationDate DESC
+      `);
+      connection.release();
+      res.json(rows);
+    }
+  } catch (error) {
+    console.error('Error fetching all registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch registrations' });
+  }
+});
+
+app.get('/api/dashboard/users', async (req, res) => {
+  try {
+    if (useFileStorage) {
+      res.json([]);
+    } else {
+      const connection = await pool.getConnection();
+      const [rows] = await connection.execute('SELECT id, firstName, lastName, email, accountType, eventType, age, createdAt FROM users ORDER BY createdAt DESC');
+      connection.release();
+      res.json(rows);
+    }
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.get('/api/dashboard/feedbacks', async (req, res) => {
+  try {
+    if (useFileStorage) {
+      res.json([]);
+    } else {
+      const connection = await pool.getConnection();
+      const [rows] = await connection.execute('SELECT * FROM feedbacks ORDER BY createdAt DESC');
+      connection.release();
+      res.json(rows);
+    }
+  } catch (error) {
+    console.error('Error fetching feedbacks:', error);
+    res.status(500).json({ error: 'Failed to fetch feedbacks' });
   }
 });
 
