@@ -4,14 +4,34 @@ const path = require('path');
 const multer = require('multer');
 const mysql = require('mysql2/promise');
 const fs = require('fs').promises;
+const session = require('express-session');
 
 const app = express();
 const PORT = 4000;
+
+// Session middleware
+app.use(session({
+  secret: 'eventsphere-secret-key-2025',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('.')); // Serve static files from current directory
+
+// Authentication middleware
+function requireAuth(req, res, next) {
+  if (req.session && req.session.isAuthenticated) {
+    return next();
+  } else {
+    res.redirect('/admin-login');
+  }
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -35,7 +55,6 @@ const dbConfig = {
   password: '8969', // Add your MySQL password here
   database: 'eventsphere_db'
 };
-
 // Create database connection pool
 const pool = mysql.createPool(dbConfig);
 
@@ -388,7 +407,276 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'html', 'register.html'));
 });
 
-app.get('/dashboard', (req, res) => {
+// Admin login page
+app.get('/admin-login', (req, res) => {
+  if (req.session.isAuthenticated) {
+    return res.redirect('/dashboard');
+  }
+  res.sendFile(path.join(__dirname, 'html', 'admin-login.html'));
+});
+
+// Admin login POST
+app.post('/admin-login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Admin credentials (you can change these)
+  const ADMIN_USERNAME = 'admin';
+  const ADMIN_PASSWORD = 'admin@123';
+
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    req.session.isAuthenticated = true;
+    req.session.username = username;
+    res.json({ success: true, message: 'Login successful' });
+  } else {
+    res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
+});
+
+// Admin logout
+app.get('/admin-logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+    }
+    res.redirect('/admin-login');
+  });
+});
+
+// User login page
+app.get('/login', (req, res) => {
+  if (req.session.userId) {
+    return res.redirect('/profile');
+  }
+  res.sendFile(path.join(__dirname, 'html', 'login.html'));
+});
+
+// User login POST
+app.post('/user-login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute('SELECT * FROM users WHERE email = ?', [email]);
+    connection.release();
+
+    if (rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    const user = rows[0];
+
+    // Check password (plain text comparison for now - should use bcrypt in production)
+    if (user.password !== password) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // Set user session
+    req.session.userId = user.id;
+    req.session.userEmail = user.email;
+    req.session.userName = `${user.firstName} ${user.lastName}`;
+    req.session.isUserAuthenticated = true;
+
+    res.json({ success: true, message: 'Login successful' });
+  } catch (error) {
+    console.error('User login error:', error);
+    res.status(500).json({ success: false, message: 'An error occurred. Please try again.' });
+  }
+});
+
+// User logout
+app.get('/user-logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+    }
+    res.redirect('/');
+  });
+});
+
+// User profile page (protected)
+app.get('/profile', (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/login');
+  }
+  res.sendFile(path.join(__dirname, 'html', 'profile.html'));
+});
+
+// User profile API (get user data)
+app.get('/api/user/profile', async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(
+      'SELECT id, firstName, lastName, email, accountType, eventType, age, createdAt FROM users WHERE id = ?',
+      [req.session.userId]
+    );
+    connection.release();
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Check authentication status
+app.get('/api/auth/status', (req, res) => {
+  if (req.session.userId) {
+    res.json({
+      isAuthenticated: true,
+      userName: req.session.userName,
+      userEmail: req.session.userEmail
+    });
+  } else {
+    res.json({ isAuthenticated: false });
+  }
+});
+
+// Get user's event registrations
+app.get('/api/user/my-registrations', async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(`
+      SELECT er.*, e.title as eventTitle, e.date as eventDate, e.time as eventTime,
+             e.location as eventLocation, e.price as eventPrice, e.imageUrl as eventImage
+      FROM event_registrations er
+      LEFT JOIN events e ON er.eventId = e.id
+      WHERE er.email = ?
+      ORDER BY er.registrationDate DESC
+    `, [req.session.userEmail]);
+    connection.release();
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching user registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch registrations' });
+  }
+});
+
+// Get user's feedbacks
+app.get('/api/user/my-feedbacks', async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(`
+      SELECT * FROM feedbacks
+      WHERE email = ?
+      ORDER BY createdAt DESC
+    `, [req.session.userEmail]);
+    connection.release();
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching user feedbacks:', error);
+    res.status(500).json({ error: 'Failed to fetch feedbacks' });
+  }
+});
+
+// Delete event registration (User can delete their own, Admin can delete any)
+app.delete('/api/event-registrations/:id', async (req, res) => {
+  const registrationId = req.params.id;
+
+  try {
+    const connection = await pool.getConnection();
+
+    // If user is logged in (not admin), verify they own this registration
+    if (req.session.userId && !req.session.isAuthenticated) {
+      const [registration] = await connection.execute(
+        'SELECT email FROM event_registrations WHERE id = ?',
+        [registrationId]
+      );
+
+      if (registration.length === 0) {
+        connection.release();
+        return res.status(404).json({ error: 'Registration not found' });
+      }
+
+      if (registration[0].email !== req.session.userEmail) {
+        connection.release();
+        return res.status(403).json({ error: 'Not authorized to delete this registration' });
+      }
+    }
+
+    // Delete the registration
+    const [result] = await connection.execute(
+      'DELETE FROM event_registrations WHERE id = ?',
+      [registrationId]
+    );
+    connection.release();
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    res.json({ success: true, message: 'Registration cancelled successfully' });
+  } catch (error) {
+    console.error('Error deleting registration:', error);
+    res.status(500).json({ error: 'Failed to delete registration' });
+  }
+});
+
+// Update event registration
+app.put('/api/event-registrations/:id', async (req, res) => {
+  const registrationId = req.params.id;
+  const { firstName, lastName, email, phone, message } = req.body;
+
+  try {
+    const connection = await pool.getConnection();
+
+    // If user is logged in (not admin), verify they own this registration
+    if (req.session.userId && !req.session.isAuthenticated) {
+      const [registration] = await connection.execute(
+        'SELECT email FROM event_registrations WHERE id = ?',
+        [registrationId]
+      );
+
+      if (registration.length === 0) {
+        connection.release();
+        return res.status(404).json({ error: 'Registration not found' });
+      }
+
+      if (registration[0].email !== req.session.userEmail) {
+        connection.release();
+        return res.status(403).json({ error: 'Not authorized to update this registration' });
+      }
+    }
+
+    // Update the registration
+    const [result] = await connection.execute(
+      `UPDATE event_registrations
+       SET firstName = ?, lastName = ?, email = ?, phone = ?, message = ?
+       WHERE id = ?`,
+      [firstName, lastName, email, phone || '', message || '', registrationId]
+    );
+    connection.release();
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    res.json({ success: true, message: 'Registration updated successfully' });
+  } catch (error) {
+    console.error('Error updating registration:', error);
+    res.status(500).json({ error: 'Failed to update registration' });
+  }
+});
+
+// Protected dashboard route
+app.get('/dashboard', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'html', 'dashboard.html'));
 });
 
@@ -413,7 +701,8 @@ app.post('/register', upload.single('file'), async (req, res) => {
     // Handle profile picture
     const profilePicture = req.file ? req.file.filename : null;
 
-    const userData = {
+    const 
+    userData = {
       firstName,
       lastName,
       email,
@@ -506,8 +795,8 @@ app.post('/api/events/register', async (req, res) => {
   }
 });
 
-// Dashboard API endpoints
-app.get('/api/dashboard/stats', async (req, res) => {
+// Dashboard API endpoints (Protected)
+app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
   try {
     if (useFileStorage) {
       const eventsData = await fs.readFile(EVENTS_FILE, 'utf8');
@@ -542,7 +831,7 @@ app.get('/api/dashboard/stats', async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/recent-registrations', async (req, res) => {
+app.get('/api/dashboard/recent-registrations', requireAuth, async (req, res) => {
   try {
     if (useFileStorage) {
       const data = await fs.readFile(REGISTRATIONS_FILE, 'utf8');
@@ -567,7 +856,7 @@ app.get('/api/dashboard/recent-registrations', async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/all-registrations', async (req, res) => {
+app.get('/api/dashboard/all-registrations', requireAuth, async (req, res) => {
   try {
     if (useFileStorage) {
       const data = await fs.readFile(REGISTRATIONS_FILE, 'utf8');
@@ -590,7 +879,7 @@ app.get('/api/dashboard/all-registrations', async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/users', async (req, res) => {
+app.get('/api/dashboard/users', requireAuth, async (req, res) => {
   try {
     if (useFileStorage) {
       res.json([]);
@@ -606,7 +895,7 @@ app.get('/api/dashboard/users', async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/feedbacks', async (req, res) => {
+app.get('/api/dashboard/feedbacks', requireAuth, async (req, res) => {
   try {
     if (useFileStorage) {
       res.json([]);

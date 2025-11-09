@@ -1,4 +1,7 @@
--- Create database
+-- EventSphere Database Setup Script
+-- Run this script to manually set up the database
+
+-- Create the database
 CREATE DATABASE IF NOT EXISTS eventsphere_db;
 
 -- Use the database
@@ -36,7 +39,7 @@ CREATE TABLE IF NOT EXISTS events (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create event_registrations table
+-- Create event registrations table
 CREATE TABLE IF NOT EXISTS event_registrations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     eventId INT NOT NULL,
@@ -49,15 +52,27 @@ CREATE TABLE IF NOT EXISTS event_registrations (
     FOREIGN KEY (eventId) REFERENCES events(id) ON DELETE CASCADE
 );
 
--- Insert sample events
-INSERT INTO events (title, description, date, time, location, category, price, maxAttendees, imageUrl) VALUES
-('Summer Music Festival', 'A vibrant outdoor music festival featuring local and international artists across multiple genres.', '2025-07-15', '18:00:00', 'Central Park, New York', 'Music', 75.00, 500, '../assets/images/music festival.jpg'),
-('Tech Innovation Conference', 'Join industry leaders and innovators for a day of tech talks, networking, and product showcases.', '2025-08-20', '09:00:00', 'Convention Center, San Francisco', 'Technology', 150.00, 300, '../assets/images/techfest.jpg'),
-('Cultural Arts Exhibition', 'Explore diverse cultural expressions through art, music, dance, and traditional crafts.', '2025-09-10', '10:00:00', 'Art Museum, Chicago', 'Cultural', 25.00, 200, '../assets/images/art.jpg'),
-('Family Fun Fair', 'A delightful family event with games, rides, food stalls, and entertainment for all ages.', '2025-10-05', '12:00:00', 'City Fairgrounds, Los Angeles', 'Family', 20.00, 1000, '../assets/images/fun fair.jpg'),
-('Corporate Leadership Summit', 'Professional development event focused on leadership skills and business strategy.', '2025-11-12', '08:30:00', 'Business Center, Houston', 'Corporate', 200.00, 150, '../assets/images/corporate.jpg');
+-- Create feedbacks table
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(255),
+    rating INT,
+    message TEXT,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- Show table structures
-DESCRIBE users;
-DESCRIBE events;
-DESCRIBE event_registrations;
+-- Insert sample events
+INSERT INTO events (title, description, date, time, location, category, price, maxAttendees, imageUrl)
+VALUES
+    ('Summer Music Festival', 'A vibrant outdoor music festival featuring local and international artists across multiple genres.', '2025-07-15', '18:00:00', 'Central Park, New York', 'Music', 75.00, 500, '../assets/images/music festival.jpg'),
+    ('Tech Innovation Conference', 'Join industry leaders and innovators for a day of tech talks, networking, and product showcases.', '2025-08-20', '09:00:00', 'Convention Center, San Francisco', 'Technology', 150.00, 300, '../assets/images/techfest.jpg'),
+    ('Cultural Arts Exhibition', 'Explore diverse cultural expressions through art, music, dance, and traditional crafts.', '2025-09-10', '10:00:00', 'Art Museum, Chicago', 'Cultural', 25.00, 200, '../assets/images/art.jpg'),
+    ('Family Fun Fair', 'A delightful family event with games, rides, food stalls, and entertainment for all ages.', '2025-10-05', '12:00:00', 'City Fairgrounds, Los Angeles', 'Family', 20.00, 1000, '../assets/images/fun fair.jpg'),
+    ('Corporate Leadership Summit', 'Professional development event focused on leadership skills and business strategy.', '2025-11-12', '08:30:00', 'Business Center, Houston', 'Corporate', 200.00, 150, '../assets/images/corporate.jpg');
+
+-- Display success message
+SELECT 'Database setup completed successfully!' AS Status;
+
+-- Show created tables
+SHOW TABLES;

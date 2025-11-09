@@ -33,6 +33,55 @@ document.addEventListener('DOMContentLoaded', () => {
   // Proceed to Payment Button
   const proceedBtn = document.getElementById('proceedToPaymentBtn');
   if (proceedBtn) proceedBtn.addEventListener('click', handleProceedToPayment);
+
+  // =================== PAYMENT CONTROLS SETUP ===================
+  // Payment method selection buttons
+  document.querySelectorAll('.pay-method').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPaymentMethod = btn.getAttribute('data-method');
+      hideAllPaymentContainers();
+
+      if (selectedPaymentMethod === 'upi') {
+        document.getElementById('upiContainer').style.display = 'block';
+        showUpiQr();
+      } else if (selectedPaymentMethod === 'card') {
+        document.getElementById('cardContainer').style.display = 'block';
+      } else if (selectedPaymentMethod === 'cash') {
+        document.getElementById('cashContainer').style.display = 'block';
+        const cashTxt = document.getElementById('cashAmountText');
+        if (cashTxt && currentSelectedEvent) {
+          cashTxt.textContent = currentSelectedEvent.price;
+        }
+      }
+    });
+  });
+
+  // Payment action buttons
+  const payDemoBtn = document.getElementById('payDemoBtn');
+  const payCardBtn = document.getElementById('payCardBtn');
+  const confirmCashBtn = document.getElementById('confirmCashBtn');
+  const closeSuccessBtn = document.getElementById('closeSuccessBtn');
+
+  if (payDemoBtn) {
+    payDemoBtn.addEventListener('click', () => simulatePaymentSuccess('UPI'));
+  }
+
+  if (payCardBtn) {
+    payCardBtn.addEventListener('click', () => simulatePaymentSuccess('Card'));
+  }
+
+  if (confirmCashBtn) {
+    confirmCashBtn.addEventListener('click', () => simulatePaymentSuccess('Cash'));
+  }
+
+  if (closeSuccessBtn) {
+    closeSuccessBtn.addEventListener('click', () => {
+      const popup = document.getElementById('paymentSuccessPopup');
+      if (popup) popup.style.display = 'none';
+    });
+  }
 });
 
 // =================== GLOBALS ===================
@@ -86,8 +135,15 @@ function createEventCard(event) {
         <div><i class="fa-solid fa-location-dot"></i> ${event.location}</div>
       </div>
       <div class="event-price">₹${event.price}</div>
-      <button class="register-btn" onclick='openRegistrationModal(${JSON.stringify(event).replace(/"/g, "&quot;")})'>Register Now</button>
+      <button class="register-btn">Register Now</button>
     </div>`;
+
+  // Attach event listener properly with the event object
+  const registerBtn = card.querySelector('.register-btn');
+  registerBtn.addEventListener('click', () => {
+    openRegistrationModal(event);
+  });
+
   return card;
 }
 
@@ -113,6 +169,7 @@ function closeEventsModal() {
 
 // =================== REGISTRATION ===================
 function openRegistrationModal(event) {
+  console.log('📝 Opening registration modal for event:', event);
   currentSelectedEvent = event;
   const modal = document.getElementById('registrationModal');
   const eventInfo = document.getElementById('selectedEventInfo');
@@ -136,43 +193,61 @@ function openRegistrationModal(event) {
 function closeRegistrationModal() {
   const modal = document.getElementById('registrationModal');
   if (modal) modal.style.display = 'none';
-  currentSelectedEvent = null;
+  // Don't clear currentSelectedEvent here - we need it for payment!
 }
 // =================== PROCEED TO PAYMENT ===================
 function handleProceedToPayment() {
+  console.log('🔄 Proceeding to payment...');
+  console.log('Event before proceeding:', currentSelectedEvent);
+
   const form = document.getElementById('eventRegistrationForm');
   if (!form) return alert('Registration form not found.');
+
   const first = form.querySelector('#firstName')?.value.trim();
   const last = form.querySelector('#lastName')?.value.trim();
   const email = form.querySelector('#email')?.value.trim();
+
   if (!first || !last || !email) {
     alert('Please fill in all required fields.');
     return;
   }
+
+  if (!currentSelectedEvent) {
+    alert('Error: Event information lost. Please try again.');
+    return;
+  }
+
   closeRegistrationModal();
   openPaymentModal();
 }
 
 // =================== PAYMENT FLOW ===================
 function openPaymentModal(event) {
-    if (event) currentSelectedEvent = event;
+  console.log('💳 Opening payment modal');
+  console.log('Current selected event:', currentSelectedEvent);
+
+  if (event) currentSelectedEvent = event;
   const modal = document.getElementById('paymentModal');
-  if (!modal) return;
+  if (!modal) {
+    console.error('❌ Payment modal not found');
+    return;
+  }
 
   const infoBox = document.getElementById('paymentEventInfo');
   if (infoBox && currentSelectedEvent) {
+    console.log('✅ Event found, displaying info');
     infoBox.innerHTML = `
       <div class="selected-event-title">${currentSelectedEvent.title}</div>
       <div style="margin-top:6px;color:#444;">Amount: <strong>₹${currentSelectedEvent.price}</strong></div>`;
-  } else{
-    infoBox && (infoBox.innerHTML = '<div>No event selected</div>');
+  } else {
+    console.error('❌ No event selected or infoBox not found');
+    infoBox && (infoBox.innerHTML = '<div style="color: red;">No event selected</div>');
   }
 
   selectedPaymentMethod = null;
   document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('active'));
   hideAllPaymentContainers();
   modal.style.display = 'block';
-  setupPaymentControls();
 }
 
 function closePaymentModal() {
@@ -187,35 +262,6 @@ function hideAllPaymentContainers() {
   });
 }
 
-function setupPaymentControls() {
-  document.querySelectorAll('.pay-method').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedPaymentMethod = btn.getAttribute('data-method');
-      hideAllPaymentContainers();
-
-      if (selectedPaymentMethod === 'upi') {
-        document.getElementById('upiContainer').style.display = 'block';
-        showUpiQr();
-      } else if (selectedPaymentMethod === 'card') {
-        document.getElementById('cardContainer').style.display = 'block';
-      } else if (selectedPaymentMethod === 'cash') {
-        document.getElementById('cashContainer').style.display = 'block';
-        const cashTxt = document.getElementById('cashAmountText');
-        if (cashTxt && currentSelectedEvent)
-          cashTxt.textContent = `₹${currentSelectedEvent.price}`;
-      }
-    };
-  });
-
-  document.getElementById('payDemoBtn')?.addEventListener('click', () => simulatePaymentSuccess('UPI'));
-  document.getElementById('payCardBtn')?.addEventListener('click', () => simulatePaymentSuccess('Card'));
-  document.getElementById('confirmCashBtn')?.addEventListener('click', () => simulatePaymentSuccess('Cash'));
-  document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
-    document.getElementById('paymentSuccessPopup').style.display = 'none';
-  });
-}
 
 function showUpiQr() {
   const qrImg = document.getElementById('qrImage');

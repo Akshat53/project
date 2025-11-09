@@ -272,6 +272,9 @@
                 <button class="btn btn-primary" onclick="refreshDashboard()">
                     <i class="fa-solid fa-sync"></i> Refresh
                 </button>
+                <a href="/admin-logout" class="btn btn-secondary">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </a>
             </div>
         </div>
 
@@ -368,6 +371,56 @@
         </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <!-- Admin Edit Registration Modal -->
+    <div id="adminEditModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #667eea; margin: 0;">Edit Registration</h2>
+                <button onclick="closeAdminEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <strong>Event:</strong> <span id="adminEditEventTitle"></span>
+            </div>
+
+            <input type="hidden" id="adminEditRegistrationId">
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">First Name *</label>
+                <input type="text" id="adminEditFirstName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Last Name *</label>
+                <input type="text" id="adminEditLastName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Email *</label>
+                <input type="email" id="adminEditEmail" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Phone</label>
+                <input type="tel" id="adminEditPhone" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Message</label>
+                <textarea id="adminEditMessage" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeAdminEditModal()" style="background: #f0f0f0; color: #333; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    Cancel
+                </button>
+                <button onclick="saveAdminEditedRegistration()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/html/dashboard.js"></script>
 </body>
 </html>

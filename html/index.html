@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <nav>
+    <nav >
     <div class="logo">
         <img src="../assets/images/logo1.jpg" alt="EventSphere Logo">
     </div>
@@ -56,10 +56,7 @@
         <li><a href="#gallery">Gallery</a></li>
         <li><a href="#contact">Contact</a></li>
         <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="login.html">Signup/Login</a></li>
-        <li><a href="/register">Register</a></li>
-
-
+        <li id="authLink"><a href="/login"><i class="fa-solid fa-user"></i> Login</a></li>
     </ul>
 </nav>
 
@@ -444,6 +441,26 @@ const navLinks = document.querySelector('nav ul');
 menuToggle.addEventListener('click', () => {
   navLinks.classList.toggle('show');
 });
+
+// Check authentication status and update navigation
+async function updateAuthLink() {
+  try {
+    const response = await fetch('/api/auth/status');
+    const data = await response.json();
+    const authLink = document.getElementById('authLink');
+
+    if (data.isAuthenticated) {
+      authLink.innerHTML = `<a href="/profile"><i class="fa-solid fa-user-circle"></i> ${data.userName.split(' ')[0]}</a>`;
+    } else {
+      authLink.innerHTML = `<a href="/login"><i class="fa-solid fa-user"></i> Login</a>`;
+    }
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+  }
+}
+
+// Update auth link on page load
+document.addEventListener('DOMContentLoaded', updateAuthLink);
 </script>
 
 </body>

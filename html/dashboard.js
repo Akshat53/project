@@ -144,14 +144,16 @@ async function loadRegistrations() {
                         <th>Phone</th>
                         <th>Message</th>
                         <th>Registration Date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
         registrations.forEach(reg => {
+            const message = (reg.message || '-').replace(/'/g, "\\'");
             tableHTML += `
-                <tr>
+                <tr data-registration-id="${reg.id}">
                     <td>${reg.id}</td>
                     <td><strong>${reg.eventTitle || 'Event #' + reg.eventId}</strong></td>
                     <td>${reg.firstName} ${reg.lastName}</td>
@@ -159,6 +161,16 @@ async function loadRegistrations() {
                     <td>${reg.phone || 'N/A'}</td>
                     <td>${reg.message || '-'}</td>
                     <td>${formatDateTime(reg.registrationDate)}</td>
+                    <td>
+                        <button onclick="editAdminRegistration(${reg.id}, '${reg.firstName}', '${reg.lastName}', '${reg.email}', '${reg.phone || ''}', '${message}', '${reg.eventTitle || 'Event #' + reg.eventId}')"
+                                class="btn-edit" style="background: #ffc107; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-right: 5px; font-size: 0.85em;">
+                            <i class="fa-solid fa-edit"></i> Edit
+                        </button>
+                        <button onclick="deleteAdminRegistration(${reg.id})"
+                                class="btn-delete" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </td>
                 </tr>
             `;
         });
@@ -400,5 +412,89 @@ function formatDateTime(dateTimeString) {
         });
     } catch (error) {
         return dateTimeString;
+    }
+}
+
+// Edit registration function (Admin)
+function editAdminRegistration(id, firstName, lastName, email, phone, message, eventTitle) {
+    // Show edit modal
+    const modal = document.getElementById('adminEditModal');
+    modal.style.display = 'flex';
+
+    // Populate form
+    document.getElementById('adminEditRegistrationId').value = id;
+    document.getElementById('adminEditEventTitle').textContent = eventTitle;
+    document.getElementById('adminEditFirstName').value = firstName;
+    document.getElementById('adminEditLastName').value = lastName;
+    document.getElementById('adminEditEmail').value = email;
+    document.getElementById('adminEditPhone').value = phone || '';
+    document.getElementById('adminEditMessage').value = message || '';
+}
+
+// Close admin edit modal
+function closeAdminEditModal() {
+    document.getElementById('adminEditModal').style.display = 'none';
+}
+
+// Save edited registration (Admin)
+async function saveAdminEditedRegistration() {
+    const id = document.getElementById('adminEditRegistrationId').value;
+    const firstName = document.getElementById('adminEditFirstName').value;
+    const lastName = document.getElementById('adminEditLastName').value;
+    const email = document.getElementById('adminEditEmail').value;
+    const phone = document.getElementById('adminEditPhone').value;
+    const message = document.getElementById('adminEditMessage').value;
+
+    if (!firstName || !lastName || !email) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/event-registrations/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firstName, lastName, email, phone, message })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Registration updated successfully!');
+            closeAdminEditModal();
+            loadRegistrations(); // Reload registrations
+            refreshDashboard(); // Refresh stats
+        } else {
+            alert(result.error || 'Failed to update registration');
+        }
+    } catch (error) {
+        console.error('Error updating registration:', error);
+        alert('Failed to update registration');
+    }
+}
+
+// Delete registration function (Admin)
+async function deleteAdminRegistration(id) {
+    if (!confirm('Are you sure you want to delete this registration? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/event-registrations/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Registration deleted successfully!');
+            loadRegistrations(); // Reload registrations
+            refreshDashboard(); // Refresh stats
+        } else {
+            alert(result.error || 'Failed to delete registration');
+        }
+    } catch (error) {
+        console.error('Error deleting registration:', error);
+        alert('Failed to delete registration');
     }
 }

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - EventSphere</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <script src="https://kit.fontawesome.com/339c5c248e.js" crossorigin="anonymous"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .profile-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .profile-content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .profile-section {
+            margin-bottom: 30px;
+        }
+
+        .profile-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-banner h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .welcome-banner p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="welcome-banner">
+            <h2>Welcome to Your Profile!</h2>
+            <p>Manage your EventSphere account and bookings</p>
+        </div>
+
+        <div class="profile-header">
+            <div>
+                <h1><i class="fa-solid fa-user-circle"></i> My Profile</h1>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary">
+                    <i class="fa-solid fa-home"></i> Home
+                </a>
+                <a href="/user-logout" class="btn btn-primary">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <div id="profileData" class="loading">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading profile...
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Registration Modal -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #667eea; margin: 0;">Edit Registration</h2>
+                <button onclick="closeEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <strong>Event:</strong> <span id="editEventTitle"></span>
+            </div>
+
+            <input type="hidden" id="editRegistrationId">
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">First Name *</label>
+                <input type="text" id="editFirstName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Last Name *</label>
+                <input type="text" id="editLastName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Email *</label>
+                <input type="email" id="editEmail" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Phone</label>
+                <input type="tel" id="editPhone" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Message</label>
+                <textarea id="editMessage" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeEditModal()" style="background: #f0f0f0; color: #333; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    Cancel
+                </button>
+                <button onclick="saveEditedRegistration()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProfile() {
+            const container = document.getElementById('profileData');
+
+            try {
+                // Fetch all data in parallel
+                const [profileRes, registrationsRes, feedbacksRes] = await Promise.all([
+                    fetch('/api/user/profile'),
+                    fetch('/api/user/my-registrations'),
+                    fetch('/api/user/my-feedbacks')
+                ]);
+
+                console.log('Profile response:', profileRes.ok);
+                console.log('Registrations response:', registrationsRes.ok);
+                console.log('Feedbacks response:', feedbacksRes.ok);
+
+                if (!profileRes.ok) throw new Error('Failed to fetch profile');
+
+                const user = await profileRes.json();
+                const registrations = registrationsRes.ok ? await registrationsRes.json() : [];
+                const feedbacks = feedbacksRes.ok ? await feedbacksRes.json() : [];
+
+                console.log('User data:', user);
+                console.log('Registrations data:', registrations);
+                console.log('Feedbacks data:', feedbacks);
+
+                // Build the HTML
+                let html = `
+                    <!-- Stats Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: bold;">${registrations.length}</div>
+                            <div style="font-size: 1em; opacity: 0.9;">Event Registrations</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: bold;">${feedbacks.length}</div>
+                            <div style="font-size: 1em; opacity: 0.9;">Feedbacks Given</div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="profile-section">
+                        <h2><i class="fa-solid fa-id-card"></i> Personal Information</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Full Name</div>
+                                <div class="info-value">${user.firstName} ${user.lastName}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Email Address</div>
+                                <div class="info-value">${user.email}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Account Type</div>
+                                <div class="info-value">${user.accountType || 'N/A'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Member Since</div>
+                                <div class="info-value">${formatDate(user.createdAt)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- My Event Registrations -->
+                    <div class="profile-section">
+                        <h2><i class="fa-solid fa-ticket"></i> My Event Registrations (${registrations.length})</h2>
+                        ${registrations.length > 0 ? `
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 12px; text-align: left;">Event</th>
+                                            <th style="padding: 12px; text-align: left;">Date</th>
+                                            <th style="padding: 12px; text-align: left;">Location</th>
+                                            <th style="padding: 12px; text-align: left;">Price</th>
+                                            <th style="padding: 12px; text-align: left;">Registered On</th>
+                                            <th style="padding: 12px; text-align: left;">Status</th>
+                                            <th style="padding: 12px; text-align: left;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${registrations.map(reg => `
+                                            <tr style="border-bottom: 1px solid #f0f0f0;" data-registration-id="${reg.id}">
+                                                <td style="padding: 12px;"><strong>${reg.eventTitle || 'Event #' + reg.eventId}</strong></td>
+                                                <td style="padding: 12px;">${formatDate(reg.eventDate)}</td>
+                                                <td style="padding: 12px;">${reg.eventLocation || 'N/A'}</td>
+                                                <td style="padding: 12px;">₹${reg.eventPrice || 0}</td>
+                                                <td style="padding: 12px;">${formatDateTime(reg.registrationDate)}</td>
+                                                <td style="padding: 12px;">
+                                                    <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 5px; font-size: 0.85em;">
+                                                        ✓ Confirmed
+                                                    </span>
+                                                </td>
+                                                <td style="padding: 12px;">
+                                                    <button onclick="editRegistration(${reg.id}, '${reg.firstName}', '${reg.lastName}', '${reg.email}', '${reg.phone || ''}', '${(reg.message || '').replace(/'/g, "\\'")}', '${reg.eventTitle}')"
+                                                            style="background: #ffc107; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-right: 5px; font-size: 0.85em;">
+                                                        <i class="fa-solid fa-edit"></i> Edit
+                                                    </button>
+                                                    <button onclick="deleteRegistration(${reg.id})"
+                                                            style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em;">
+                                                        <i class="fa-solid fa-trash"></i> Cancel
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : `
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                <i class="fa-solid fa-calendar-xmark" style="font-size: 3em; margin-bottom: 15px;"></i>
+                                <p>You haven't registered for any events yet.</p>
+                                <a href="/#services" class="btn btn-primary" style="margin-top: 15px;">
+                                    <i class="fa-solid fa-calendar-plus"></i> Browse Events
+                                </a>
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- My Feedbacks -->
+                    <div class="profile-section">
+                        <h2><i class="fa-solid fa-star"></i> My Feedback History (${feedbacks.length})</h2>
+                        ${feedbacks.length > 0 ? `
+                            <div style="display: grid; gap: 15px; margin-top: 15px;">
+                                ${feedbacks.map(fb => `
+                                    <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; border-left: 4px solid #ffc107;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                            <div style="color: #ffc107; font-size: 1.2em;">
+                                                ${'★'.repeat(fb.rating)}${'☆'.repeat(5 - fb.rating)}
+                                            </div>
+                                            <div style="color: #666; font-size: 0.85em;">
+                                                ${formatDateTime(fb.createdAt)}
+                                            </div>
+                                        </div>
+                                        <div style="color: #333;">
+                                            "${fb.message}"
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                <i class="fa-solid fa-comment-slash" style="font-size: 3em; margin-bottom: 15px;"></i>
+                                <p>You haven't left any feedback yet.</p>
+                                <a href="/" class="btn btn-secondary" style="margin-top: 15px;">
+                                    <i class="fa-solid fa-star"></i> Leave Feedback
+                                </a>
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="profile-section">
+                        <h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px;">
+                            <a href="/#services" class="btn btn-primary">
+                                <i class="fa-solid fa-calendar-plus"></i> Browse Events
+                            </a>
+                            <a href="/" class="btn btn-secondary">
+                                <i class="fa-solid fa-star"></i> Leave Feedback
+                            </a>
+                            <a href="/" class="btn btn-secondary">
+                                <i class="fa-solid fa-home"></i> Back to Home
+                            </a>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                container.innerHTML = '<div class="loading" style="color: red;">Failed to load profile. Please try again.</div>';
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch {
+                return dateString;
+            }
+        }
+
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return 'N/A';
+            try {
+                return new Date(dateTimeString).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+            } catch {
+                return dateTimeString;
+            }
+        }
+
+        // Edit registration function
+        function editRegistration(id, firstName, lastName, email, phone, message, eventTitle) {
+            // Show edit modal
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'flex';
+
+            // Populate form
+            document.getElementById('editRegistrationId').value = id;
+            document.getElementById('editEventTitle').textContent = eventTitle;
+            document.getElementById('editFirstName').value = firstName;
+            document.getElementById('editLastName').value = lastName;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPhone').value = phone || '';
+            document.getElementById('editMessage').value = message || '';
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Save edited registration
+        async function saveEditedRegistration() {
+            const id = document.getElementById('editRegistrationId').value;
+            const firstName = document.getElementById('editFirstName').value;
+            const lastName = document.getElementById('editLastName').value;
+            const email = document.getElementById('editEmail').value;
+            const phone = document.getElementById('editPhone').value;
+            const message = document.getElementById('editMessage').value;
+
+            if (!firstName || !lastName || !email) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/event-registrations/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName, lastName, email, phone, message })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Registration updated successfully!');
+                    closeEditModal();
+                    loadProfile(); // Reload profile data
+                } else {
+                    alert(result.error || 'Failed to update registration');
+                }
+            } catch (error) {
+                console.error('Error updating registration:', error);
+                alert('Failed to update registration');
+            }
+        }
+
+        // Delete registration function
+        async function deleteRegistration(id) {
+            if (!confirm('Are you sure you want to cancel this event registration?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/event-registrations/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Registration cancelled successfully!');
+                    loadProfile(); // Reload profile data
+                } else {
+                    alert(result.error || 'Failed to cancel registration');
+                }
+            } catch (error) {
+                console.error('Error cancelling registration:', error);
+                alert('Failed to cancel registration');
+            }
+        }
+
+        // Load profile on page load
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>
