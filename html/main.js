@@ -229,17 +229,63 @@ function showUpiQr() {
   qrImg.alt = `Scan to pay ₹${amount}`;
 }
 
-function simulatePaymentSuccess(method) {
+async function simulatePaymentSuccess(method) {
   const popup = document.getElementById('paymentSuccessPopup');
   const title = document.getElementById('successTitle');
   const message = document.getElementById('successMessage');
   const eventName = currentSelectedEvent?.title ?? 'Event';
   const amount = currentSelectedEvent?.price ?? 0;
+
   if (!popup || !title || !message) return alert('Payment success (demo)');
-  title.textContent = 'Payment Successful';
-  message.textContent = `Your ${method} payment of ₹${amount} for "${eventName}" was successful (demo).`;
-  popup.style.display = 'flex';
-  closePaymentModal();
+
+  // Get registration form data
+  const form = document.getElementById('eventRegistrationForm');
+  if (!form || !currentSelectedEvent) {
+    alert('Registration data not found');
+    return;
+  }
+
+  const firstName = form.querySelector('#firstName')?.value.trim();
+  const lastName = form.querySelector('#lastName')?.value.trim();
+  const email = form.querySelector('#email')?.value.trim();
+  const phone = form.querySelector('#phone')?.value.trim();
+  const messageText = form.querySelector('#message')?.value.trim();
+
+  // Save registration to database
+  try {
+    const response = await fetch('/api/events/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        eventId: currentSelectedEvent.id,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+        message: messageText
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      title.textContent = 'Registration Successful!';
+      message.textContent = `Your ${method} payment of ₹${amount} for "${eventName}" was successful. You have been registered for this event!`;
+      popup.style.display = 'flex';
+      closePaymentModal();
+
+      // Reset the form
+      form.reset();
+      currentSelectedEvent = null;
+    } else {
+      alert('Registration failed: ' + (result.error || 'Please try again'));
+    }
+  } catch (error) {
+    console.error('Error registering for event:', error);
+    alert('Failed to register for event. Please try again.');
+  }
 }
 
 // =================== UTILITIES ===================
@@ -277,3 +323,127 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft' && typeof changeSlide === 'function') changeSlide(-1);
   if (e.key === 'ArrowRight' && typeof changeSlide === 'function') changeSlide(1);
 });
+
+// =================== FEEDBACK HANDLING ===================
+let selectedRating = 0;
+
+// Open feedback modal
+const openFeedbackBtn = document.getElementById('openFeedbackBtn');
+if (openFeedbackBtn) {
+  openFeedbackBtn.addEventListener('click', () => {
+    const modal = document.getElementById('feedbackModal');
+    if (modal) {
+      modal.style.display = 'block';
+      selectedRating = 0;
+      updateStars();
+      document.getElementById('feedbackMessage').value = '';
+    }
+  });
+}
+
+// Close feedback modal
+const closeModal = document.getElementById('closeModal');
+if (closeModal) {
+  closeModal.addEventListener('click', () => {
+    const modal = document.getElementById('feedbackModal');
+    if (modal) modal.style.display = 'none';
+  });
+}
+
+// Star rating functionality
+const stars = document.querySelectorAll('#feedbackModal .stars i');
+stars.forEach(star => {
+  star.addEventListener('click', () => {
+    selectedRating = parseInt(star.getAttribute('data-rating'));
+    updateStars();
+  });
+
+  star.addEventListener('mouseenter', () => {
+    const rating = parseInt(star.getAttribute('data-rating'));
+    highlightStars(rating);
+  });
+});
+
+const starsContainer = document.querySelector('#feedbackModal .stars');
+if (starsContainer) {
+  starsContainer.addEventListener('mouseleave', () => {
+    updateStars();
+  });
+}
+
+function updateStars() {
+  stars.forEach(star => {
+    const rating = parseInt(star.getAttribute('data-rating'));
+    if (rating <= selectedRating) {
+      star.style.color = '#ffc107';
+    } else {
+      star.style.color = '#ddd';
+    }
+  });
+}
+
+function highlightStars(rating) {
+  stars.forEach(star => {
+    const starRating = parseInt(star.getAttribute('data-rating'));
+    if (starRating <= rating) {
+      star.style.color = '#ffc107';
+    } else {
+      star.style.color = '#ddd';
+    }
+  });
+}
+
+// Submit feedback
+const submitFeedbackBtn = document.getElementById('submitFeedback');
+if (submitFeedbackBtn) {
+  submitFeedbackBtn.addEventListener('click', async () => {
+    const message = document.getElementById('feedbackMessage').value.trim();
+
+    if (selectedRating === 0) {
+      alert('Please select a rating!');
+      return;
+    }
+
+    if (!message) {
+      alert('Please write your feedback message!');
+      return;
+    }
+
+    // Disable button to prevent double submission
+    submitFeedbackBtn.disabled = true;
+    submitFeedbackBtn.textContent = 'Submitting...';
+
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: 'Anonymous User',
+          email: null,
+          rating: selectedRating,
+          message: message
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Thank you for your feedback!');
+        document.getElementById('feedbackModal').style.display = 'none';
+        selectedRating = 0;
+        document.getElementById('feedbackMessage').value = '';
+        updateStars();
+      } else {
+        alert(result.error || 'Failed to submit feedback. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+    } finally {
+      submitFeedbackBtn.disabled = false;
+      submitFeedbackBtn.textContent = 'Submit Feedback';
+    }
+  });
+}

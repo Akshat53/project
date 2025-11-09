@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Function to switch tabs
-function switchTab(tabName) {
+function switchTab(tabName, clickedElement) {
     // Remove active class from all tabs and content
     document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
@@ -18,7 +18,9 @@ function switchTab(tabName) {
     });
 
     // Add active class to selected tab
-    event.target.classList.add('active');
+    if (clickedElement) {
+        clickedElement.classList.add('active');
+    }
     document.getElementById(`${tabName}-tab`).classList.add('active');
 
     // Load data for the selected tab
@@ -140,6 +142,7 @@ async function loadRegistrations() {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
+                        <th>Message</th>
                         <th>Registration Date</th>
                     </tr>
                 </thead>
@@ -150,10 +153,11 @@ async function loadRegistrations() {
             tableHTML += `
                 <tr>
                     <td>${reg.id}</td>
-                    <td><strong>${reg.eventTitle || 'N/A'}</strong></td>
+                    <td><strong>${reg.eventTitle || 'Event #' + reg.eventId}</strong></td>
                     <td>${reg.firstName} ${reg.lastName}</td>
                     <td>${reg.email}</td>
                     <td>${reg.phone || 'N/A'}</td>
+                    <td>${reg.message || '-'}</td>
                     <td>${formatDateTime(reg.registrationDate)}</td>
                 </tr>
             `;
@@ -313,7 +317,7 @@ async function loadRecentActivity() {
                     <td>${reg.email}</td>
                     <td>${reg.phone || 'N/A'}</td>
                     <td>${formatDateTime(reg.registrationDate)}</td>
-                    <td><span class="badge badge-success">Registered</span></td>
+                    <td><span class="badge badge-success">✓ Registered</span></td>
                 </tr>
             `;
         });

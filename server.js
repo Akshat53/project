@@ -622,6 +622,56 @@ app.get('/api/dashboard/feedbacks', async (req, res) => {
   }
 });
 
+// API endpoint to submit feedback
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { name, email, rating, message } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a valid rating (1-5 stars)'
+      });
+    }
+
+    if (useFileStorage) {
+      // For file storage, we would save to a feedbacks.json file
+      res.json({
+        success: true,
+        message: 'Thank you for your feedback! (File storage not implemented for feedbacks)'
+      });
+    } else {
+      const connection = await pool.getConnection();
+      const insertQuery = `
+        INSERT INTO feedbacks (name, email, rating, message)
+        VALUES (?, ?, ?, ?)
+      `;
+
+      const [result] = await connection.execute(insertQuery, [
+        name || 'Anonymous',
+        email || null,
+        rating,
+        message || ''
+      ]);
+
+      connection.release();
+      console.log('Feedback submitted successfully:', result.insertId);
+
+      res.json({
+        success: true,
+        message: 'Thank you for your feedback!',
+        feedbackId: result.insertId
+      });
+    }
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to submit feedback. Please try again.'
+    });
+  }
+});
+
 app.get('/thank-you', (req, res) => {
   res.send(`
     <!DOCTYPE html>
